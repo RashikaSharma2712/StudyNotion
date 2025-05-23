@@ -13,7 +13,7 @@ and much more — inspired by the experience of modern e-learning platforms.
 - ✅ Create, Edit & Publish Courses
 - ✅ Upload Videos with Cloudinary
 - ✅ Course Purchase & Enrollment
-- ✅ Payment Gateway Integration (Stripe)
+- ✅ Payment Gateway Integration (Razorpay)
 - ✅ Dashboard with Stats and Enrolled Courses
 - ✅ Email Notifications (via Nodemailer)
 - ✅ Responsive Frontend with Tailwind CSS
