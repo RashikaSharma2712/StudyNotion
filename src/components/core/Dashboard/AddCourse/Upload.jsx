@@ -12,11 +12,12 @@ export default function Upload({
   register,
   setValue,
   errors,
-  video = false,
+  video = true,
   viewData = null,
   editData = null,
 }) {
-  const { course } = useSelector((state) => state.course)
+  
+const { course } = useSelector((state) => state.course)
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewSource, setPreviewSource] = useState(
     viewData ? viewData : editData ? editData : ""
@@ -56,6 +57,10 @@ export default function Upload({
     setValue(name, selectedFile)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile, setValue])
+
+  
+  console.log("Selected File:", selectedFile);
+
 
   return (
     <div className="flex flex-col space-y-2">

@@ -13,8 +13,7 @@ import {
 import { setCourse, setStep } from "../../../../../slices/courseSlice"
 import { COURSE_STATUS } from "../../../../../utils/constants"
 import IconBtn from "../../../../common/IconBtn"
- import Upload from "../Upload"
-import chipInput from "./chipInput"
+import ChipInput from "./chipInput"
 import RequiredField from "./RequiredField"
 
 export default function CourseInformationForm() {
@@ -31,20 +30,23 @@ export default function CourseInformationForm() {
   const { course, editCourse } = useSelector((state) => state.course)
   const [loading, setLoading] = useState(false)
   const [courseCategories, setCourseCategories] = useState([])
+  const [thumbnailPreview, setThumbnailPreview] = useState(
+    editCourse ? course?.thumbnail : null
+  )
 
   useEffect(() => {
     const getCategories = async () => {
       setLoading(true)
       const categories = await fetchCourseCategories()
       if (categories.length > 0) {
-        // console.log("categories", categories)
+        console.log("categories", categories)
         setCourseCategories(categories)
       }
+    
       setLoading(false)
     }
-    // if form is in edit mode
+
     if (editCourse) {
-      // console.log("data populated", editCourse)
       setValue("courseTitle", course.courseName)
       setValue("courseShortDesc", course.courseDescription)
       setValue("coursePrice", course.price)
@@ -54,78 +56,49 @@ export default function CourseInformationForm() {
       setValue("courseRequirements", course.instructions)
       setValue("courseImage", course.thumbnail)
     }
-    getCategories()
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    getCategories()
   }, [])
 
   const isFormUpdated = () => {
     const currentValues = getValues()
-    // console.log("changes after editing form values:", currentValues)
-    if (
+    return (
       currentValues.courseTitle !== course.courseName ||
       currentValues.courseShortDesc !== course.courseDescription ||
       currentValues.coursePrice !== course.price ||
       currentValues.courseTags.toString() !== course.tag.toString() ||
       currentValues.courseBenefits !== course.whatYouWillLearn ||
-      (currentValues.courseCategory && course.category && currentValues.courseCategory._id !== course.category._id) ||
+      (currentValues.courseCategory &&
+        course.category &&
+        currentValues.courseCategory._id !== course.category._id) ||
       currentValues.courseRequirements.toString() !==
-        course.instructions.toString() ||
+      course.instructions.toString() ||
       currentValues.courseImage !== course.thumbnail
-    ) {
-      return true
-    }
-    return false
+    )
   }
 
-  //   handle next button click
   const onSubmit = async (data) => {
-    // console.log(data)
+    const formData = new FormData()
 
     if (editCourse) {
-      // const currentValues = getValues()
-      // console.log("changes after editing form values:", currentValues)
-      // console.log("now course:", course)
-      // console.log("Has Form Changed:", isFormUpdated())
       if (isFormUpdated()) {
-        const currentValues = getValues()
-        const formData = new FormData()
-        // console.log(data)
         formData.append("courseId", course._id)
-        if (currentValues.courseTitle !== course.courseName) {
-          formData.append("courseName", data.courseTitle)
-        }
-        if (currentValues.courseShortDesc !== course.courseDescription) {
-          formData.append("courseDescription", data.courseShortDesc)
-        }
-        if (currentValues.coursePrice !== course.price) {
-          formData.append("price", data.coursePrice)
-        }
-        if (currentValues.courseTags.toString() !== course.tag.toString()) {
-          formData.append("tag", JSON.stringify(data.courseTags))
-        }
-        if (currentValues.courseBenefits !== course.whatYouWillLearn) {
-          formData.append("whatYouWillLearn", data.courseBenefits)
-        }
-        if (currentValues.courseCategory && course.category && currentValues.courseCategory._id !== course.category._id) {
-          formData.append("category", data.courseCategory)
-        }
-        if (
-          currentValues.courseRequirements.toString() !==
-          course.instructions.toString()
-        ) {
-          formData.append(
-            "instructions",
-            JSON.stringify(data.courseRequirements)
-          )
-        }
-        if (currentValues.courseImage !== course.thumbnail) {
-          formData.append("thumbnailImage", data.courseImage)
-        }
-        // console.log("Edit Form data: ", formData)
+        formData.append("courseName", data.courseTitle)
+        formData.append("courseDescription", data.courseShortDesc)
+        formData.append("price", data.coursePrice)
+        formData.append("tag", JSON.stringify(data.courseTags))
+        formData.append("whatYouWillLearn", data.courseBenefits)
+        formData.append("category", data.courseCategory)
+        formData.append(
+          "instructions",
+          JSON.stringify(data.courseRequirements)
+        )
+        formData.append("thumbnailImage", data.courseImage)
+
         setLoading(true)
         const result = await editCourseDetails(formData, token)
         setLoading(false)
+
         if (result) {
           dispatch(setStep(2))
           dispatch(setCourse(result))
@@ -136,7 +109,6 @@ export default function CourseInformationForm() {
       return
     }
 
-    const formData = new FormData()
     formData.append("courseName", data.courseTitle)
     formData.append("courseDescription", data.courseShortDesc)
     formData.append("price", data.coursePrice)
@@ -146,23 +118,33 @@ export default function CourseInformationForm() {
     formData.append("status", COURSE_STATUS.DRAFT)
     formData.append("instructions", JSON.stringify(data.courseRequirements))
     formData.append("thumbnailImage", data.courseImage)
+
     setLoading(true)
     const result = await addCourseDetails(formData, token)
+    setLoading(false)
+
     if (result) {
       dispatch(setStep(2))
       dispatch(setCourse(result))
     }
-    setLoading(false)
+  }
+
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setValue("courseImage", file)
+      setThumbnailPreview(URL.createObjectURL(file))
+    }
   }
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-8 rounded-md border-[1px] border-richblack-700 bg-richblack-800 p-6"
+      className="space-y-8 rounded-md border border-richblack-700 bg-richblack-800 p-6"
     >
-      {/* Course Title */}
+      {/* Title */}
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-richblack-5" htmlFor="courseTitle">
+        <label htmlFor="courseTitle" className="text-sm text-richblack-5">
           Course Title <sup className="text-pink-200">*</sup>
         </label>
         <input
@@ -172,31 +154,33 @@ export default function CourseInformationForm() {
           className="form-style w-full"
         />
         {errors.courseTitle && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
+          <span className="ml-2 text-xs text-pink-200">
             Course title is required
           </span>
         )}
       </div>
-      {/* Course Short Description */}
+
+      {/* Short Description */}
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-richblack-5" htmlFor="courseShortDesc">
+        <label htmlFor="courseShortDesc" className="text-sm text-richblack-5">
           Course Short Description <sup className="text-pink-200">*</sup>
         </label>
         <textarea
           id="courseShortDesc"
           placeholder="Enter Description"
           {...register("courseShortDesc", { required: true })}
-          className="form-style resize-x-none min-h-[130px] w-full"
+          className="form-style min-h-[130px]"
         />
         {errors.courseShortDesc && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
-            Course Description is required
+          <span className="ml-2 text-xs text-pink-200">
+            Description is required
           </span>
         )}
       </div>
-      {/* Course Price */}
+
+      {/* Price */}
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-richblack-5" htmlFor="coursePrice">
+        <label htmlFor="coursePrice" className="text-sm text-richblack-5">
           Course Price <sup className="text-pink-200">*</sup>
         </label>
         <div className="relative">
@@ -210,19 +194,20 @@ export default function CourseInformationForm() {
                 value: /^(0|[1-9]\d*)(\.\d+)?$/,
               },
             })}
-            className="form-style w-full !pl-12"
+            className="form-style pl-12 w-full"
           />
-          <HiOutlineCurrencyRupee className="absolute left-3 top-1/2 inline-block -translate-y-1/2 text-2xl text-richblack-400" />
+          <HiOutlineCurrencyRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-2xl text-richblack-400" />
         </div>
         {errors.coursePrice && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
-            Course Price is required
+          <span className="ml-2 text-xs text-pink-200">
+            Valid price is required
           </span>
         )}
       </div>
-      {/* Course Category */}
+
+      {/* Category */}
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-richblack-5" htmlFor="courseCategory">
+        <label htmlFor="courseCategory" className="text-sm text-richblack-5">
           Course Category <sup className="text-pink-200">*</sup>
         </label>
         <select
@@ -230,24 +215,21 @@ export default function CourseInformationForm() {
           id="courseCategory"
           className="form-style w-full"
         >
-          <option value="" disabled>
-            Choose a Category
-          </option>
+          <option value="">Choose a Category</option>
           {!loading &&
-            courseCategories?.map((category, index) => (
-              <option key={index} value={category?._id}>
-                {category?.name}
+            courseCategories.map((category) => (
+              <option key={category._id} value={category._id}>
+                {category.name}
               </option>
             ))}
         </select>
         {errors.courseCategory && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
-            Course Category is required
-          </span>
+          <span className="ml-2 text-xs text-pink-200">Category is required</span>
         )}
       </div>
-      {/* Course Tags */}
-      <chipInput
+
+      {/* Tags */}
+      <ChipInput
         label="Tags"
         name="courseTags"
         placeholder="Enter Tags and press Enter"
@@ -256,33 +238,57 @@ export default function CourseInformationForm() {
         setValue={setValue}
         getValues={getValues}
       />
-      {/* Course Thumbnail Image */}
-      <Upload
-        name="courseImage"
-        label="Course Thumbnail"
-        register={register}
-        setValue={setValue}
-        errors={errors}
-        editData={editCourse ? course?.thumbnail : null}
-      />
-      {/* Benefits of the course */}
+
+      {/* ✅ Upload Thumbnail */}
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-richblack-5" htmlFor="courseBenefits">
+        <label className="text-sm text-richblack-5">
+          Course Thumbnail <sup className="text-pink-200">*</sup>
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleThumbnailChange}
+          className="hidden"
+          id="courseImage"
+        />
+        <label
+          htmlFor="courseImage"
+          className="cursor-pointer flex items-center justify-center border border-dashed border-richblack-500 bg-richblack-700 py-10 rounded-md text-center"
+        >
+          {thumbnailPreview ? (
+            <img
+              src={thumbnailPreview}
+              alt="Thumbnail Preview"
+              className="h-40 object-contain"
+            />
+          ) : (
+            <span className="text-richblack-200">Click to upload thumbnail</span>
+          )}
+        </label>
+        {errors.courseImage && (
+          <span className="ml-2 text-xs text-pink-200">Thumbnail is required</span>
+        )}
+      </div>
+
+      {/* Benefits */}
+      <div className="flex flex-col space-y-2">
+        <label htmlFor="courseBenefits" className="text-sm text-richblack-5">
           Benefits of the course <sup className="text-pink-200">*</sup>
         </label>
         <textarea
           id="courseBenefits"
           placeholder="Enter benefits of the course"
-          {...register("courseBenefits", { required: true})}
-          className="form-style resize-x-none min-h-[130px] w-full"
+          {...register("courseBenefits", { required: true })}
+          className="form-style min-h-[130px]"
         />
         {errors.courseBenefits && (
-          <span className="ml-2 text-xs tracking-wide text-pink-200">
-            Benefits of the course is required
+          <span className="ml-2 text-xs text-pink-200">
+            This field is required
           </span>
         )}
       </div>
-      {/* Requirements/Instructions */}
+
+      {/* Requirements */}
       <RequiredField
         name="courseRequirements"
         label="Requirements/Instructions"
@@ -291,24 +297,23 @@ export default function CourseInformationForm() {
         errors={errors}
         getValues={getValues}
       />
-      {/* Next Button */}
+
+      {/* Buttons */}
       <div className="flex justify-end gap-x-2">
         {editCourse && (
           <button
             onClick={() => dispatch(setStep(2))}
             disabled={loading}
-            className={`flex cursor-pointer items-center gap-x-2 rounded-md bg-richblack-300 py-[8px] px-[20px] font-semibold text-richblack-900`}
+            className="bg-richblack-300 text-richblack-900 py-[8px] px-[20px] rounded-md font-semibold"
           >
-            Continue Wihout Saving
+            Continue Without Saving
           </button>
         )}
-        <IconBtn
-          disabled={loading}
-          text={!editCourse ? "Next" : "Save Changes"}
-        >
+        <IconBtn disabled={loading} text={!editCourse ? "Next" : "Save Changes"}>
           <MdNavigateNext />
         </IconBtn>
       </div>
     </form>
   )
 }
+

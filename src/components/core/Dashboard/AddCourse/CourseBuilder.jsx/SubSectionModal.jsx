@@ -9,7 +9,7 @@ import {
   updateSubSection,
 } from "../../../../../services/operations/courseDetailsAPI"
 import { setCourse } from "../../../../../slices/courseSlice"
-import IconBtn from "../../../../common/IconButton"
+import IconBtn from "../../../../common/IconBtn"
 import Upload from "../Upload"
 
 export default function SubSectionModal({
@@ -102,6 +102,8 @@ export default function SubSectionModal({
         handleEditSubsection()
       }
       return
+      console.log("Lecture Video on submit:", data.lectureVideo);
+
     }
 
     const formData = new FormData()
@@ -150,8 +152,10 @@ export default function SubSectionModal({
             video={true}
             viewData={view ? modalData.videoUrl : null}
             editData={edit ? modalData.videoUrl : null}
+
           />
           {/* Lecture Title */}
+          {/* {console.log(name)} */}
           <div className="flex flex-col space-y-2">
             <label className="text-sm text-richblack-5" htmlFor="lectureTitle">
               Lecture Title {!view && <sup className="text-pink-200">*</sup>}
