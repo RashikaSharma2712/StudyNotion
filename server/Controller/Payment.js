@@ -1,4 +1,4 @@
-const { instance } = require("../Configuration/Razorpay");
+const Razorpay = require("razorpay");
 const Course = require("../Model/Course");
 const crypto = require("crypto");
 const User = require("../Model/User");
@@ -9,6 +9,13 @@ const {
 } = require("../Mail/Template/CourseEnrollmentEmail");
 const { paymentSuccessEmail } = require("../Mail/Template/PaymentSuccessEmail");
 const CourseProgress = require("../Model/CourseProgress");
+require("dotenv").config();
+
+// Initialize Razorpay
+const instance = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY,
+    key_secret: process.env.RAZORPAY_SECRET,
+});
 
 exports.capturePayment = async (req, res) => {
   const { courses } = req.body;
@@ -64,6 +71,26 @@ exports.verifyPayment = async (req, res) => {
   const razorpay_signature = req.body?.razorpay_signature;
   const courses = req.body?.courses;
   const userId = req.user.id;
+
+  // Development bypass: allow simulating payment success without Razorpay
+  if (
+    process.env.PAYMENT_DEV_MODE === "true" &&
+    req.body?.devPayment === true &&
+    Array.isArray(courses) &&
+    courses.length > 0 &&
+    userId
+  ) {
+    try {
+      await enrollStudents(courses, userId, res);
+      return res
+        .status(200)
+        .json({ success: true, message: "Dev Payment Verified" });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Dev Payment Failed" });
+    }
+  }
   if (
     !razorpay_order_id ||
     !razorpay_payment_id ||
@@ -84,6 +111,15 @@ exports.verifyPayment = async (req, res) => {
   }
   return res.status(200).json({ success: false, message: "Payment Failed" });
 };
+
+// Public endpoint to provide Razorpay key_id to client
+exports.getRazorpayKey = async (req, res) => {
+  try {
+    return res.status(200).json({ success: true, key: process.env.RAZORPAY_KEY });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Could not fetch Razorpay key" });
+  }
+}
 
 exports.sendPaymentSuccessEmail = async (req, res) => {
   const { orderId, paymentId, amount } = req.body;

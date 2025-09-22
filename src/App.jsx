@@ -11,7 +11,9 @@ import UpdatePassword from "./pages/UpdatePassword";
 import VerifyEmail from "./pages/verifyEmail";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Catalog from "./pages/Catalog";
 import MyProfile from "./components/core/Dashboard/MyProfile";
+import ViewCourse from "./pages/ViewCourse";
 import Settings from "./components/core/Dashboard/Settings";
 import Dashboard from "./pages/Dashboard";
 import Error from "./pages/errorPage";
@@ -40,6 +42,9 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/catalog/:catalogName" element={<Catalog />} />
+        <Route path="/courses/:courseId" element={<ViewCourse />} />
+        <Route path="/view-course/:courseId/section/:sectionId/sub-section/:subSectionId" element={<ViewCourse />} />
 
         {/* Private Dashboard Routes */}
         <Route
